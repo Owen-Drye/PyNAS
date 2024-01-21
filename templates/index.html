@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='stylesheets/styles.css') }}"/>
+    <script src="{{url_for('static', filename='scripts/script.js')}}"></script>
+    <title>Title</title>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <script>
+          var messages = {{ messages | safe }};
+          for (var i=0; i<messages.length; i++) {
+            alert(messages[i]);
+          }
+        </script>
+      {% endif %}
+    {% endwith %}
+</head>
+<body>
+
+    <div class="wrapper">
+        <div class="topnav">
+          <a class="active" href="">Storage</a>
+          <a href="#news">Smart Home Hub</a>
+          <a href="#contact">Lists</a>
+        </div>
+
+        <div class="dropdown">
+              <button class="dropbtn">Other Services</button>
+              <div class="dropdown-content">
+                <a href="#">Portainer</a>
+                <a href="#">Link 2</a>
+                <a href="#">Link 3</a>
+              </div>
+        </div>
+    </div>
+
+
+    <div class="table-wrapper">
+        <table>
+          <tr>
+            <th colspan="2">
+                <a href="{{ url_for('storage')}}">storage</a>
+
+                {% for path in root.split('/') %}
+                    {% if path != ''%}
+                        <a href="{{ url_for('storage_folder', path=root.split(path)[0]) + path }}">/{{path}}</a>
+                    {% endif %}
+                {% endfor %}
+
+            </th>
+            <th>
+                <form action="/upload{{request.path}}" method="POST"
+                     enctype="multipart/form-data">
+                     <input class="file-input" style="width: fit-content;" type="file" name="file" />
+                     <input type="submit"/>
+                  </form>
+                <button onclick="openPopup(document.getElementById('new-dir-popup'))" id="new-dir-btn">New Directory</button>
+                <form action="/delete{{request.path}}" id="delete-form" method="POST"><input value="Delete" type="submit" id="delete-btn"></form>
+
+
+
+            </th>
+          </tr>
+
+            {%for dir in files[1]%}
+
+            <div class="popup" id="{{dir}}">
+                <h3>Rename {{dir}}</h3>
+                <br>
+                <form method="POST" action="{{url_for('rename', file_path=request.path + '/' + dir)}}">
+                    <input name="file_name" placeholder="New Name" class="center-input" type="text">
+                    <input type="submit">
+                    <input type="button" onclick="closePopup(document.getElementById('{{dir}}'));" value="Cancel">
+                </form>
+
+            </div>
+
+            <tr>
+                {% if root != '' %}
+                    <td> <input form="delete-form" name='{{root + '/' + dir}}' type="checkbox"> </td>
+                {% else %}
+                    <td> <input form="delete-form" name={{dir}} type="checkbox"> </td>
+                {% endif %}
+                <td class="bold"> <img src="{{ url_for('static', filename='images/dir_icon.png') }}"> <a href="{{ url_for('storage_folder', path=root + '/' + dir) }}">{{dir}}</a> <button onclick="openPopup(document.getElementById('{{dir}}'))">Rename</button> </td>
+                <td>Directory</td>
+            </tr>
+
+
+
+           {%endfor%}
+
+          {%for file in files[0]%}
+            <div class="popup" id="{{file}}">
+                <h3>Rename {{file}}</h3>
+                <br>
+                <form method="POST" action="{{url_for('rename', file_path=request.path + '/' + file)}}">
+                    <input name="file_name" placeholder="New Name" class="center-input" type="text">
+                    <input type="submit">
+                    <input type="button" onclick="closePopup(document.getElementById('{{file}}'));" value="Cancel">
+                </form>
+
+            </div>
+
+            <tr>
+                <td><input form="delete-form" name="{{root + '/' + file}}" type="checkbox"> </td>
+                <td><img src="{{ url_for('static', filename='images/file_icon.png') }}"> <a href="{{ url_for('download', filename=root + '/' + file) }}" download>{{file}}</a> <button onclick="openPopup(document.getElementById('{{file}}'))" >Rename</button> </td>
+                {% if file.split('.')|length <= 1 or extensions_dict[file.split('.')[1]] == '' %}
+                    <td>Extension unknown</td>
+                {% else %}
+                    <td>{{extensions_dict[file.split('.')[1]]}}</td>
+                {% endif %}
+            </tr>
+
+
+
+           {%endfor%}
+
+        </table>
+
+    </div>
+
+
+    <div class="popup" id="new-dir-popup">
+        <h3>New Directory</h3>
+        <br>
+        <form method="POST" action="{{url_for('new_folder', dir_path=request.path)}}">
+            <input name="dir_name" placeholder="Directory name" class="center-input" type="text">
+            <input type="submit" >
+            <input type="button" onclick="closePopup(document.getElementById('new-dir-popup'));" value="Cancel">
+        </form>
+
+    </div>
+
+
+</body>
+</html>
